@@ -11,7 +11,7 @@ CREATE TABLE avaliacaocontinua.company ( --cria tabela company no esquema avalia
 --QUESTÃO 03--
     person_name VARCHAR(50) NOT NULL PRIMARY KEY, --nome da pessoa (funcionario) como chave primária--
     street VARCHAR (50), --rua da pessoa--
-    city VARCHAR(50), --cidade da pessoa--
+    city VARCHAR(50) --cidade da pessoa--
 ); --todos com espaço de 50 caracteres--
 
 --QUESTÃO 04--
