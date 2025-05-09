@@ -5,13 +5,13 @@ AS
 BEGIN
 	SELECT 
 		s.name AS StudentName,
-		s.dept_name AS studentdept,
-		c.title AS coursetitle,
-		c.dept_name AS coursedept,
+		s.dept_name AS StudentDept,
+		c.title AS CourseTitle,
+		c.dept_name AS CourseDept,
 		t.semester,
 		t.year,
-		t.grade AS abcgrade,
-		gp.points AS numgrade
+		t.grade AS abcGrade,
+		gp.points AS NumGrade
 	FROM
 		student s
 		JOIN takes t ON s.s_ID = t.s_ID
