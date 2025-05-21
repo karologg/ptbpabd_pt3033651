@@ -1,50 +1,73 @@
+-- Criação do procedimento chamado salaryHistogram, que recebe como parâmetro o número de intervalos desejado
 CREATE PROCEDURE salaryHistogram
-    @num_intervals INT
+    @num_intervals INT  -- parâmetro de entrada: número de faixas (intervalos) do histograma
 AS
 BEGIN
-    DECLARE @min_salary DECIMAL(10,2),
-            @max_salary DECIMAL(10,2),
-            @interval_size DECIMAL(10,2),
-            @i INT = 0;
+    -- Declara variáveis para armazenar o menor e o maior salário da tabela
+    DECLARE @min_salary FLOAT, @max_salary FLOAT;
 
-    SELECT 
-        @min_salary = MIN(salary), 
-        @max_salary = MAX(salary)
+    -- Obtém o menor (MIN) e maior (MAX) salário da tabela professor e armazena nas variáveis
+    SELECT @min_salary = MIN(salary), @max_salary = MAX(salary)
     FROM professor;
 
+    -- Declara uma variável para armazenar o tamanho de cada faixa do histograma
+    DECLARE @interval_size FLOAT;
+
+    -- Calcula o tamanho de cada faixa dividindo a diferença entre o maior e o menor salário
+    -- pelo número de intervalos desejado
     SET @interval_size = (@max_salary - @min_salary) / @num_intervals;
 
-    DECLARE @results TABLE (
-        valorMinimo DECIMAL(10,2),
-        valorMaximo DECIMAL(10,2),
-        total INT
+    -- Cria uma tabela temporária para armazenar os dados do histograma
+    CREATE TABLE #histogram (
+        valorMinimo FLOAT,  -- início do intervalo
+        valorMaximo FLOAT,  -- fim do intervalo
+        total INT           -- quantidade de professores naquele intervalo
     );
 
+    -- Inicializa um contador de loop
+    DECLARE @i INT = 0;
+
+    -- Loop que percorre todos os intervalos, de 0 até (n-1)
     WHILE @i < @num_intervals
     BEGIN
-        DECLARE @start_range DECIMAL(10,2) = @min_salary + (@interval_size * @i);
-        DECLARE @end_range DECIMAL(10,2) = @start_range + @interval_size;
+        -- Calcula o valor mínimo da faixa atual
+        DECLARE @start_range FLOAT = @min_salary + @i * @interval_size;
 
-        DECLARE @count INT;
+        -- Calcula o valor máximo da faixa atual
+        DECLARE @end_range FLOAT = @start_range + @interval_size;
 
+        -- Verifica se é o último intervalo (o mais alto)
+        -- Nesse caso, o salário máximo também deve ser incluído (com <=)
         IF @i = @num_intervals - 1
         BEGIN
-            SELECT @count = COUNT(*) 
+            -- Insere os valores da faixa na tabela temporária, contando quantos salários estão entre os limites (inclusive o máximo)
+            INSERT INTO #histogram
+            SELECT
+                @start_range AS valorMinimo,
+                @end_range AS valorMaximo,
+                COUNT(*) AS total
             FROM professor
-            WHERE salary >= @start_range AND salary <= @end_range;
+            WHERE salary >= @start_range AND salary <= @end_range;  -- inclui o máximo com <=
         END
         ELSE
         BEGIN
-            SELECT @count = COUNT(*) 
+            -- Para faixas intermediárias, conta quantos salários estão no intervalo, sem incluir o máximo da faixa
+            INSERT INTO #histogram
+            SELECT
+                @start_range AS valorMinimo,
+                @end_range AS valorMaximo,
+                COUNT(*) AS total
             FROM professor
-            WHERE salary >= @start_range AND salary < @end_range;
+            WHERE salary >= @start_range AND salary < @end_range;  -- exclusivo do máximo
         END
 
-        INSERT INTO @results (valorMinimo, valorMaximo, total)
-        VALUES (@start_range, @end_range, @count);
-
+        -- Incrementa o contador para passar para a próxima faixa
         SET @i = @i + 1;
     END
 
-    SELECT * FROM @results;
+    -- Exibe os resultados do histograma após o loop
+    SELECT * FROM #histogram;
+
+    -- Apaga a tabela temporária após exibir os resultados
+    DROP TABLE #histogram;
 END;
